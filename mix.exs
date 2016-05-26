@@ -19,7 +19,7 @@ defmodule KindynowQkNew.Mixfile do
   def application do
     [mod: {KindynowQkNew, []},
      applications: [:phoenix, :phoenix_html, :cowboy, :logger, :httpoison, :gettext,
-                    :phoenix_ecto, :postgrex, :quantum]]
+                    :phoenix_ecto, :postgrex, :quantum, :parallel_stream]]
   end
 
   # Specifies which paths to compile per environment.
@@ -31,6 +31,7 @@ defmodule KindynowQkNew.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [{:phoenix, "~> 1.1.4"},
+     {:parallel_stream, "~> 1.0.3"},
      {:postgrex, ">= 0.0.0"},
      {:httpoison, "~> 0.8.0"},
      {:phoenix_ecto, "~> 2.0"},

@@ -15,17 +15,34 @@ defmodule KindynowQkNew.UpdateFamilies do
     first_name last_name phone account_relationship family_id qk_contact_id
   )a
 
-  def update_families do
+  def update_families skip do
     headers = %{ "Authorization"=> "SharedSecretAuthorizationAttribute 9837363hejf84743875khbefkjhbf98f8gfkjnbfkjg545kjn598098fd8"}
-    url = "https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Families?$expand=Contacts,Children&skip=0"
+    url ="https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Families?$expand=Contacts,Children&$skip="<>skip
 
-    url
-    |> HTTPoison.get!(headers)
-    |> Map.fetch!(:body)
-    |> Poison.decode!
-    |> Map.fetch!("value")
-    |> Stream.map(&save_family/1)
-    |> Stream.run
+    data =
+      url
+      |> HTTPoison.get!(headers)
+      |> Map.fetch!(:body)
+      |> Poison.decode!
+
+    family_data =
+      data
+      |> Map.fetch!("value")
+      |> Stream.map(&save_family/1)
+      |> Stream.run
+
+    case data["@odata.nextLink"] do
+      next_url when is_nil next_url ->
+        IO.puts "DONE"
+      next_url ->
+        IO.puts next_url
+        next_skip =
+          next_url
+          |> String.split("=")
+          |> List.last
+        update_families next_skip
+    end
+
   end
 
   defp create_or_update_family_associations family, children, contacts do
@@ -72,8 +89,8 @@ defmodule KindynowQkNew.UpdateFamilies do
         {:database_id, v}
       "DateOfBirth" ->
         case Date.cast(v) do
-          :ok ->
-            {:dob, Date.cast(v)}
+          {:ok, date} ->
+            {:dob, Date.cast(date)}
           _ ->
             {:dob, nil}
         end
@@ -139,7 +156,7 @@ defmodule KindynowQkNew.UpdateFamilies do
             IO.puts "CREATED CONTACT RECORD"
           {:error, record_changeset} ->
             IO.inspect record_changeset
-            IO.puts "ERROR UPDATING CONTACT RECORD!"
+            IO.error "ERROR UPDATING CONTACT RECORD!"
         end
       model ->
         contact_struct = contact_map
@@ -150,7 +167,7 @@ defmodule KindynowQkNew.UpdateFamilies do
             IO.puts "UPDATED CONTACT RECORD"
           {:error, record_changeset} ->
             IO.inspect record_changeset
-            IO.puts "ERROR UPDATING CONTACT RECORD!"
+            IO.error "ERROR UPDATING CONTACT RECORD!"
         end
     end
   end
@@ -166,7 +183,7 @@ defmodule KindynowQkNew.UpdateFamilies do
           {:ok, child} ->
             IO.puts "CREATED CHILD RECORD"
           {:error, record_changeset} ->
-            IO.puts "ERROR CREATING CHILD RECORD!"
+            IO.error "ERROR CREATING CHILD RECORD!"
         end
       model ->
         child_struct = child_map
@@ -176,7 +193,7 @@ defmodule KindynowQkNew.UpdateFamilies do
           {:ok, child_data} ->
             IO.puts "UPDATED CHILD RECORD"
           {:error, record_changeset} ->
-            IO.puts "ERROR UPDATING CHILD RECORD!"
+            IO.error "ERROR UPDATING CHILD RECORD!"
         end
     end
   end
