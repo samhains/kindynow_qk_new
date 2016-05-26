@@ -1,4 +1,5 @@
 defmodule KindynowQkNew.Child do
+  require IEx
   use KindynowQkNew.Web, :model
 
   schema "children" do
@@ -12,8 +13,8 @@ defmodule KindynowQkNew.Child do
     timestamps
   end
 
-  @required_fields ~w(qk_child_id first_name last_name sync_id)
-  @optional_fields ~w(dob)
+  @required_fields ~w(qk_child_id)
+  @optional_fields ~w(dob sync_id first_name last_name)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -24,6 +25,6 @@ defmodule KindynowQkNew.Child do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
-    |> unique_constraint(:qk_family_id)
+    |> unique_constraint(:qk_child_id)
   end
 end

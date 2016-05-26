@@ -12,8 +12,8 @@ defmodule KindynowQkNew.Contact do
     timestamps
   end
 
-  @required_fields ~w(qk_contact_id first_name last_name phone account_relationship)
-  @optional_fields ~w()
+  @required_fields ~w(qk_contact_id)
+  @optional_fields ~w(account_relationship phone first_name last_name)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

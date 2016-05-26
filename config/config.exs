@@ -28,7 +28,7 @@ config :phoenix, :generators,
   migration: true,
   binary_id: false
 
-config :quantum, cron: [
-  # Every minute
-  "* * * * *": {KindynowQkNew.UpdateFamilies, :update_families}
-]
+# config :quantum, cron: [
+#   # Every minute
+#   "* * * * *": {KindynowQkNew.UpdateFamilies, :update_families}
+# ]

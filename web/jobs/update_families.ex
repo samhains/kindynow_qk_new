@@ -46,11 +46,12 @@ defmodule KindynowQkNew.UpdateFamilies do
   end
 
   defp save_family family do
-    family_changeset = Family.changeset(%Family{}, %{:qk_family_id => to_string family["FamilyId"]})
+    family_id = to_string family["FamilyId"]
+    family_changeset = Family.changeset(%Family{}, %{:qk_family_id => family_id})
     children = family["Children"]
     contacts = family["Contacts"]
 
-    case Repo.one(from f in Family, where: f.qk_family_id == "319222") do
+    case Repo.one(from f in Family, where: f.qk_family_id == ^family_id) do
       model when is_nil model ->
         case Repo.insert(family_changeset) do
           {:ok, family} ->
@@ -116,24 +117,67 @@ defmodule KindynowQkNew.UpdateFamilies do
     contact
     |> Enum.map(&fix_contact_keys/1)
     |> Enum.filter(&filter_contact_keys/1)
-    |> Enum.into(%Contact{})
-    |> insert_record
+    |> insert_contact
   end
 
   defp save_child child do
     child
     |> Enum.map(&fix_child_keys/1)
     |> Enum.filter(&filter_child_keys/1)
-    |> Enum.into(%Child{})
-    |> insert_record
+    |> insert_child
   end
 
-  defp insert_record record do
-    case Repo.insert(record)  do
-      {:ok, record} ->
-        IO.puts "SAVED"
-      {:error, record_changeset} ->
-        IO.puts "ERROR SAVING RECORD!"
+  defp insert_contact contact_map do
+    contact_id = contact_map[:qk_contact_id]
+    contact_struct = contact_map
+    |> Enum.into(%Contact{})
+
+    case Repo.one(from c in Contact, where: c.qk_contact_id == ^contact_id) do
+      model when is_nil model ->
+        case Repo.insert(contact_struct) do
+          {:ok, contact} ->
+            IO.puts "CREATED CONTACT RECORD"
+          {:error, record_changeset} ->
+            IO.inspect record_changeset
+            IO.puts "ERROR UPDATING CONTACT RECORD!"
+        end
+      model ->
+        contact_struct = contact_map
+        |> Enum.into(%{})
+        contact_changeset = Contact.changeset(model, contact_struct)
+        case Repo.update(contact_changeset) do
+          {:ok, contact_data} ->
+            IO.puts "UPDATED CONTACT RECORD"
+          {:error, record_changeset} ->
+            IO.inspect record_changeset
+            IO.puts "ERROR UPDATING CONTACT RECORD!"
+        end
+    end
+  end
+
+  defp insert_child child_map do
+    child_id = child_map[:qk_child_id]
+    child_struct = child_map
+    |> Enum.into(%Child{})
+
+    case Repo.one(from c in Child, where: c.qk_child_id == ^child_id) do
+      model when is_nil model ->
+        case Repo.insert(child_struct) do
+          {:ok, child} ->
+            IO.puts "CREATED CHILD RECORD"
+          {:error, record_changeset} ->
+            IO.puts "ERROR CREATING CHILD RECORD!"
+        end
+      model ->
+        child_struct = child_map
+        |> Enum.into(%{})
+        child_changeset = Child.changeset(model, child_struct)
+        case Repo.update(child_changeset) do
+          {:ok, child_data} ->
+            IO.puts "UPDATED CHILD RECORD"
+          {:error, record_changeset} ->
+            IO.puts "ERROR UPDATING CHILD RECORD!"
+        end
     end
   end
 end
