@@ -14,7 +14,7 @@ defmodule KindynowQkNew.Child do
   end
 
   @required_fields ~w(qk_child_id)
-  @optional_fields ~w(dob sync_id first_name last_name)
+  @optional_fields ~w(sync_id dob first_name last_name)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

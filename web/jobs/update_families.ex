@@ -6,6 +6,7 @@ defmodule KindynowQkNew.UpdateFamilies do
   alias KindynowQkNew.Repo
   alias Ecto.Date
   import Ecto.Query
+  import Logger
 
   @child_expected_fields ~w(
     first_name last_name dob sync_id qk_child_id family_id
@@ -15,8 +16,27 @@ defmodule KindynowQkNew.UpdateFamilies do
     first_name last_name phone account_relationship family_id qk_contact_id
   )a
 
-  def update_families skip do
+  def parallel_update_families batch do
+    page_min = (20 * batch) - 19
+    page_max = 20 * batch
+    data =
+      page_min..page_max
+      |> ParallelStream.map(&update_families/1)
+      |> Enum.into([])
+    case Enum.find data, fn(x) -> x==-1 end do
+        index when is_nil index ->
+          parallel_update_families(batch+1)
+        index ->
+          IO.puts "Done"
+    end
+  end
+
+  def update_families page do
     headers = %{ "Authorization"=> "SharedSecretAuthorizationAttribute 9837363hejf84743875khbefkjhbf98f8gfkjnbfkjg545kjn598098fd8"}
+    skip =
+      page*100
+      |> to_string
+
     url ="https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Families?$expand=Contacts,Children&$skip="<>skip
 
     data =
@@ -28,32 +48,33 @@ defmodule KindynowQkNew.UpdateFamilies do
     family_data =
       data
       |> Map.fetch!("value")
-      |> Stream.map(&save_family/1)
+      |> Stream.map(&create_or_update_family/1)
       |> Stream.run
 
     case data["@odata.nextLink"] do
       next_url when is_nil next_url ->
-        IO.puts "DONE"
+        -1
       next_url ->
-        IO.puts next_url
-        next_skip =
+        skip =
           next_url
           |> String.split("=")
           |> List.last
-        update_families next_skip
+          |> String.to_integer
+        skip/100
     end
 
   end
 
-  defp create_or_update_family_associations family, children, contacts do
-    children_with_family_id =
-      add_family_id_to_enum_of_map children, family
-    children_with_family_id
-    |> Enum.map(&save_child/1)
-    contacts_with_family_id =
-      add_family_id_to_enum_of_map contacts, family
-    contacts_with_family_id
+  defp create_or_update_contacts family, contacts do
+    contacts
+    |> add_family_id_to_enum_of_map(family)
     |> Enum.map(&save_contact/1)
+  end
+
+  defp create_or_update_children family, children do
+    children
+    |> add_family_id_to_enum_of_map(family)
+    |> Enum.map(&save_child/1)
   end
 
   defp add_family_id_to_enum_of_map enum, family do
@@ -62,22 +83,25 @@ defmodule KindynowQkNew.UpdateFamilies do
     end)
   end
 
-  defp save_family family do
+  defp create_or_update_family family do
     family_id = to_string family["FamilyId"]
     family_changeset = Family.changeset(%Family{}, %{:qk_family_id => family_id})
     children = family["Children"]
     contacts = family["Contacts"]
 
     case Repo.one(from f in Family, where: f.qk_family_id == ^family_id) do
-      model when is_nil model ->
+      record when is_nil record ->
         case Repo.insert(family_changeset) do
           {:ok, family} ->
-            create_or_update_family_associations family, children, contacts
+            create_or_update_children record, children
+            create_or_update_contacts record, contacts
+            {:ok, family}
           {:error, family_changeset} ->
-            IO.inspect family_changeset
+            Logger.error (inspect family_changeset.errors)
         end
-     model ->
-        create_or_update_family_associations model, children, contacts
+     record ->
+        create_or_update_children record, children
+        create_or_update_contacts record, contacts
     end
   end
 
@@ -90,7 +114,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       "DateOfBirth" ->
         case Date.cast(v) do
           {:ok, date} ->
-            {:dob, Date.cast(date)}
+            {:dob, date}
           _ ->
             {:dob, nil}
         end
@@ -131,69 +155,58 @@ defmodule KindynowQkNew.UpdateFamilies do
   end
 
   defp save_contact contact do
-    contact
-    |> Enum.map(&fix_contact_keys/1)
-    |> Enum.filter(&filter_contact_keys/1)
-    |> insert_contact
+    contact_map =
+      contact
+      |> Enum.map(&fix_contact_keys/1)
+      |> Enum.filter(&filter_contact_keys/1)
+
+    contact_id = contact_map[:qk_contact_id]
+    query = from c in Contact, where: c.qk_contact_id == ^contact_id
+
+    insert_record_and_print_errors(contact_map, Contact, %Contact{}, query)
   end
 
   defp save_child child do
-    child
-    |> Enum.map(&fix_child_keys/1)
-    |> Enum.filter(&filter_child_keys/1)
-    |> insert_child
+    child_map =
+      child
+      |> Enum.map(&fix_child_keys/1)
+      |> Enum.filter(&filter_child_keys/1)
+
+    child_id = child_map[:qk_child_id]
+    query = from c in Child, where: c.qk_child_id == ^child_id
+
+    insert_record_and_print_errors(child_map, Child, %Child{}, query)
   end
 
-  defp insert_contact contact_map do
-    contact_id = contact_map[:qk_contact_id]
-    contact_struct = contact_map
-    |> Enum.into(%Contact{})
-
-    case Repo.one(from c in Contact, where: c.qk_contact_id == ^contact_id) do
-      model when is_nil model ->
-        case Repo.insert(contact_struct) do
-          {:ok, contact} ->
-            IO.puts "CREATED CONTACT RECORD"
-          {:error, record_changeset} ->
-            IO.inspect record_changeset
-            IO.error "ERROR UPDATING CONTACT RECORD!"
-        end
-      model ->
-        contact_struct = contact_map
-        |> Enum.into(%{})
-        contact_changeset = Contact.changeset(model, contact_struct)
-        case Repo.update(contact_changeset) do
-          {:ok, contact_data} ->
-            IO.puts "UPDATED CONTACT RECORD"
-          {:error, record_changeset} ->
-            IO.inspect record_changeset
-            IO.error "ERROR UPDATING CONTACT RECORD!"
-        end
+  defp insert_record_and_print_errors map, model, struct, query do
+    case insert_record(map, model, struct, query) do
+      {:ok, record} ->
+        record
+      {:error, errors} ->
+        Logger.error (inspect errors)
     end
   end
 
-  defp insert_child child_map do
-    child_id = child_map[:qk_child_id]
-    child_struct = child_map
-    |> Enum.into(%Child{})
-
-    case Repo.one(from c in Child, where: c.qk_child_id == ^child_id) do
-      model when is_nil model ->
-        case Repo.insert(child_struct) do
-          {:ok, child} ->
-            IO.puts "CREATED CHILD RECORD"
+  defp insert_record record_map, model, struct, query do
+    record_struct = record_map
+      |> Enum.into(struct)
+    case Repo.one(query) do
+      record when is_nil record ->
+        case Repo.insert(record_struct) do
+          {:ok, record} ->
+            {:ok, record}
           {:error, record_changeset} ->
-            IO.error "ERROR CREATING CHILD RECORD!"
+            {:error, record_changeset.errors}
         end
-      model ->
-        child_struct = child_map
+      record ->
+        record_struct = record_map
         |> Enum.into(%{})
-        child_changeset = Child.changeset(model, child_struct)
-        case Repo.update(child_changeset) do
-          {:ok, child_data} ->
-            IO.puts "UPDATED CHILD RECORD"
+        record_changeset = model.changeset(record, record_struct)
+        case Repo.update(record_changeset) do
+          {:ok, record} ->
+            {:ok, record}
           {:error, record_changeset} ->
-            IO.error "ERROR UPDATING CHILD RECORD!"
+            {:error, record_changeset.errors}
         end
     end
   end
