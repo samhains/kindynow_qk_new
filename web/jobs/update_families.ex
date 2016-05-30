@@ -27,7 +27,7 @@ defmodule KindynowQkNew.UpdateFamilies do
         index when is_nil index ->
           parallel_update_families(batch+1)
         index ->
-          IO.puts "Done"
+          Logger.info "Finished Updating Families"
     end
   end
 
@@ -188,26 +188,33 @@ defmodule KindynowQkNew.UpdateFamilies do
   end
 
   defp insert_record record_map, model, struct, query do
-    record_struct = record_map
+    record_struct =
+      record_map
       |> Enum.into(struct)
+
     case Repo.one(query) do
       record when is_nil record ->
-        case Repo.insert(record_struct) do
-          {:ok, record} ->
-            {:ok, record}
-          {:error, record_changeset} ->
-            {:error, record_changeset.errors}
-        end
+        record_struct
+        |> Repo.insert
+        |> response_handler
+
       record ->
         record_struct = record_map
         |> Enum.into(%{})
-        record_changeset = model.changeset(record, record_struct)
-        case Repo.update(record_changeset) do
-          {:ok, record} ->
-            {:ok, record}
-          {:error, record_changeset} ->
-            {:error, record_changeset.errors}
-        end
+
+        record
+        |> model.changeset(record_struct)
+        |> Repo.update
+        |> response_handler
+    end
+  end
+
+  defp response_handler response do
+    case response do
+      {:ok, record} ->
+        {:ok, record}
+      {:error, record_changeset} ->
+        {:error, record_changeset.errors}
     end
   end
 end
