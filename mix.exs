@@ -39,8 +39,8 @@ defmodule KindynowQkNew.Mixfile do
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:gettext, "~> 0.9"},
      {:quantum, "~> 1.7.1"},
+     {:mock, "~> 0.1.1", only: :test},
      {:cowboy, "~> 1.0"}]
-
   end
 
   # Aliases are shortcut or tasks specific to the current project.
