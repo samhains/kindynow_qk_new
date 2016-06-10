@@ -28,3 +28,13 @@ defmodule KindynowQkNew.Child do
     |> unique_constraint(:qk_child_id)
   end
 end
+
+defimpl Collectable, for: KindynowQkNew.Child do
+  def into(original) do
+    {original, fn
+      map, {:cont, {k, v}} -> %{ map | k => v}
+      map, :done -> map
+      _, :halt -> :ok
+    end}
+  end
+end

@@ -27,3 +27,13 @@ defmodule KindynowQkNew.Contact do
     |> unique_constraint(:qk_contact_id)
   end
 end
+
+defimpl Collectable, for: KindynowQkNew.Contact do
+  def into(original) do
+    {original, fn
+      map, {:cont, {k, v}} -> %{ map | k => v}
+      map, :done -> map
+      _, :halt -> :ok
+    end}
+  end
+end

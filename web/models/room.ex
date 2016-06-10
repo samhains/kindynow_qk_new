@@ -14,8 +14,9 @@ defmodule KindynowQkNew.Room do
 
     timestamps
   end
-  @required_fields ~w(qk_room_id active name min_age max_age capacity casual_booking_type)
-  @optional_fields ~w()
+
+  @required_fields ~w(qk_room_id service_id active name)
+  @optional_fields ~w(capacity casual_booking_type min_age max_age)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -26,5 +27,15 @@ defmodule KindynowQkNew.Room do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
+  end
+end
+
+defimpl Collectable, for: KindynowQkNew.Room do
+  def into(original) do
+    {original, fn
+      map, {:cont, {k, v}} -> %{ map | k => v}
+      map, :done -> map
+      _, :halt -> :ok
+    end}
   end
 end

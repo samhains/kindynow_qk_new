@@ -13,11 +13,15 @@ defmodule KindynowQkNew.Service do
     field :state, :string
     field :post_code, :string
 
+    has_many :rooms, KindynowQkNew.Room
+    # has_many :service_addresses, KindynowQkNew.ServiceAddress
+    # has_many :addresses, through: [:address_services, :address]
+
     timestamps
   end
 
-  @required_fields ~w(qk_service_id name email phone_number time_zone licensed_capacity address_street address_suburb address_state address_post_code)
-  @optional_fields ~w()
+  @required_fields ~w(qk_service_id name)
+  @optional_fields ~w(email phone_number licensed_capacity time_zone suburb street suburb state post_code state post_code)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

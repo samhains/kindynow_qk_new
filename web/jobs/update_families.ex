@@ -5,6 +5,8 @@ defmodule KindynowQkNew.UpdateFamilies do
   alias KindynowQkNew.Contact
   alias KindynowQkNew.Repo
   alias Ecto.Date
+
+  import KindynowQkNew.JobsHelper
   import Ecto.Query
   import Logger
 
@@ -93,8 +95,8 @@ defmodule KindynowQkNew.UpdateFamilies do
       record when is_nil record ->
         case Repo.insert(family_changeset) do
           {:ok, family} ->
-            create_or_update_children record, children
-            create_or_update_contacts record, contacts
+            create_or_update_children family, children
+            create_or_update_contacts family, contacts
             {:ok, family}
           {:error, family_changeset} ->
             Logger.error (inspect family_changeset.errors)
@@ -176,65 +178,5 @@ defmodule KindynowQkNew.UpdateFamilies do
     query = from c in Child, where: c.qk_child_id == ^child_id
 
     insert_record_and_print_errors(child_map, Child, %Child{}, query)
-  end
-
-  defp insert_record_and_print_errors map, model, struct, query do
-    case insert_record(map, model, struct, query) do
-      {:ok, record} ->
-        record
-      {:error, errors} ->
-        Logger.error (inspect errors)
-    end
-  end
-
-  defp insert_record record_map, model, struct, query do
-    record_struct =
-      record_map
-      |> Enum.into(struct)
-
-    case Repo.one(query) do
-      record when is_nil record ->
-        record_struct
-        |> Repo.insert
-        |> response_handler
-
-      record ->
-        record_struct = record_map
-        |> Enum.into(%{})
-
-        record
-        |> model.changeset(record_struct)
-        |> Repo.update
-        |> response_handler
-    end
-  end
-
-  defp response_handler response do
-    case response do
-      {:ok, record} ->
-        {:ok, record}
-      {:error, record_changeset} ->
-        {:error, record_changeset.errors}
-    end
-  end
-end
-
-defimpl Collectable, for: KindynowQkNew.Contact do
-  def into(original) do
-    {original, fn
-      map, {:cont, {k, v}} -> %{ map | k => v}
-      map, :done -> map
-      _, :halt -> :ok
-    end}
-  end
-end
-
-defimpl Collectable, for: KindynowQkNew.Child do
-  def into(original) do
-    {original, fn
-      map, {:cont, {k, v}} -> %{ map | k => v}
-      map, :done -> map
-      _, :halt -> :ok
-    end}
   end
 end

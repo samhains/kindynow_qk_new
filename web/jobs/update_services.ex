@@ -3,16 +3,17 @@ defmodule KindynowQkNew.UpdateServices do
   alias KindynowQkNew.Service
   alias KindynowQkNew.Room
   alias KindynowQkNew.Repo
-  alias Ecto.Date
+
+  import KindynowQkNew.JobsHelper
   import Ecto.Query
   import Logger
 
   @service_expected_fields ~w(
-    qk_service_id name email phone_number time_zone licensed_capacity address_street address_suburb address_state address_post_code
+    qk_service_id name email phone_number time_zone licensed_capacity street suburb state post_code
   )a
 
   @room_expected_fields ~w(
-    qk_room_id active name min_age max_age capacity casual_booking_type
+    qk_room_id service_id active name min_age max_age capacity casual_booking_type
   )a
 
   def update_services do
@@ -29,38 +30,53 @@ defmodule KindynowQkNew.UpdateServices do
 
     case Map.fetch(data, "value") do
       {:ok, response_value} ->
-        {:ok, response_value}
           response_value
             |> Stream.map(&create_or_update_service/1)
             |> Stream.run
+        {:ok, response_value}
       :error ->
         {:error, data}
     end
   end
 
   defp create_or_update_service service do
-    service_id = to_string service["DatabaseId"]
-    service_map =
+    service_id = to_string service["ServiceId"]
+    address = service["StreetAddress"]
+
+    address_params =
+      address
+      |> Enum.map(&fix_address_keys/1)
+
+    service_params =
       service
       |> Enum.map(&fix_service_keys/1)
+
+    service_map =
+      address_params ++ service_params
       |> Enum.filter(&filter_service_keys/1)
+      |> Enum.into(%{})
+
+    time_zone =
+      address_params[:state]
+      |> calculate_time_zone
+
+    service_map =  Map.put(service_map, :time_zone, time_zone)
 
     service_changeset = Service.changeset(%Service{}, service_map)
     rooms = service["Rolls"]
 
-    case Repo.one(from s in Service, where: s.qk_service_id == ^service_id) do
+    case Repo.one(from s in Service, where: s.qk_service_id == ^service_id, preload: [:rooms]) do
       record when is_nil record ->
         case Repo.insert(service_changeset) do
           {:ok, service} ->
-            create_or_update_rooms record, rooms
+            create_or_update_rooms service, rooms
             {:ok, service}
           {:error, service_changeset} ->
             Logger.error (inspect service_changeset.errors)
         end
+
       record ->
-        # record_struct = service_map
-        # |> Enum.into(%{})
-        # if the record exists, update it and then its rooms
+        make_missing_rooms_inactive record, rooms
 
         record
         |> Service.changeset(service_map)
@@ -71,24 +87,42 @@ defmodule KindynowQkNew.UpdateServices do
     end
   end
 
+  defp make_missing_rooms_inactive service, rooms do
+    api_room_ids =
+      rooms
+      |> Enum.map(fn (room) -> to_string room["RollId"] end)
+
+    existing_room_ids =
+      service.rooms
+      |> Enum.map(fn (room) -> room.qk_room_id end)
+
+    removed_rooms =
+      existing_room_ids
+      |> Enum.reject(fn(id) -> Enum.member?(api_room_ids, id) end)
+
+    from(r in Room, where: r.qk_room_id in ^removed_rooms)
+    |> Repo.update_all(set: [active: false])
+  end
+
   defp create_or_update_rooms service, rooms do
     rooms
-    |> add_room_id_to_enum_of_map(service)
+    |> add_service_id_to_enum_of_map(service)
     |> Enum.map(&save_room/1)
   end
 
-  defp add_room_id_to_enum_of_map enum, service do
-    Enum.map(enum, fn map ->
-      Map.put(map, :service_id, service.id)
-    end)
+  defp add_service_id_to_enum_of_map enum, service do
+    enum
+    |> Enum.map(fn map -> Map.put(map, :service_id, service.id) end)
   end
 
   defp filter_room_keys {k, v} do
-    Enum.member?(@room_expected_fields, k)
+    @room_expected_fields
+    |> Enum.member?(k)
   end
 
   defp filter_service_keys {k, v} do
-    Enum.member?(@service_expected_fields, k)
+    @service_expected_fields
+    |> Enum.member?(k)
   end
 
   defp save_room room do
@@ -100,60 +134,57 @@ defmodule KindynowQkNew.UpdateServices do
     room_id = room_map[:qk_room_id]
     query = from r in Room, where: r.qk_room_id == ^room_id
 
-    insert_record_and_print_errors(room_map, Room, %Room{}, query)
+    insert_record_and_print_errors room_map, Room, %Room{}, query
   end
 
-  defp insert_record_and_print_errors map, model, struct, query do
-    case insert_record(map, model, struct, query) do
-      {:ok, record} ->
-        record
-      {:error, errors} ->
-        Logger.error (inspect errors)
+  defp calculate_time_zone state do
+    case state do
+      "VIC" ->
+        "Australia/Melbourne"
+      "NSW" ->
+        "Australia/Sydney"
+      "QLD" ->
+        "Australia/Brisbane"
+      "SA" ->
+        "Australia/Adelaide"
+      "NT" ->
+        "Australia/Darwin"
+      "WA" ->
+        "Australia/Perth"
+      "ACT" ->
+        "Australia/Sydney"
+      _ ->
+        "Australia/Sydney"
     end
   end
 
-  defp insert_record record_map, model, struct, query do
-    record_struct =
-      record_map
-      |> Enum.into(struct)
-
-    case Repo.one(query) do
-      record when is_nil record ->
-        record_struct
-        |> Repo.insert
-        |> response_handler
-
-      record ->
-        record_struct = record_map
-        |> Enum.into(%{})
-
-        record
-        |> model.changeset(record_struct)
-        |> Repo.update
-        |> response_handler
-    end
-  end
-
-
-  defp response_handler response do
-    case response do
-      {:ok, record} ->
-        {:ok, record}
-      {:error, record_changeset} ->
-        {:error, record_changeset.errors}
+  defp fix_address_keys {k, v} do
+    case k do
+      "Building" ->
+        {:building, to_string v}
+      "Postcode" ->
+        {:post_code, v}
+      "State" ->
+        {:state, v}
+      "Street" ->
+        {:street, to_string v}
+      "Suburb" ->
+        {:suburb, v}
+      _ ->
+        {k, v}
     end
   end
 
   defp fix_service_keys {k, v} do
     case k do
-      "DatabaseId" ->
+      "ServiceId" ->
         {:qk_service_id, to_string v}
       "Name" ->
         {:name, v}
       "Email" ->
         {:email, v}
       "LicensedPlaces" ->
-        {:licensed_capacity, v}
+        {:licensed_capacity, to_string v}
       "PhoneNumber" ->
         {:phone_number, v}
       _ ->
@@ -167,12 +198,15 @@ defmodule KindynowQkNew.UpdateServices do
         {:qk_room_id, to_string v}
       "Name" ->
         {:name, v}
+      "Active" ->
+        {:active, v}
       "MaximumAge" ->
-        {:maximum_age, v}
+        {:max_age, v}
       "MinimumAge" ->
-        {:minumum_age, v}
+        {:min_age, v}
       _ ->
         {k, v}
     end
   end
+
 end

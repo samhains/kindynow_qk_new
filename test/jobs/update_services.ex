@@ -5,6 +5,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   import Mock
   alias KindynowQkNew.Repo
   import Ecto.Query
+  import IEx
 
   defp populate_db do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> valid_response end] do
@@ -316,8 +317,6 @@ defmodule KindynowQkNew.UpdateServicesTest do
       services = KindynowQkNew.UpdateServices.update_services
       assert Repo.one(from s in Service, select: count("*")) == 2
       assert Repo.one(from s in Room, select: count("*")) == 12
-      {ok, data} = services
-      assert ok == :ok
     end
   end
 
@@ -339,36 +338,37 @@ defmodule KindynowQkNew.UpdateServicesTest do
     end
   end
 
-  # test "updates existing services and their associations given valid inputs" do
+  test "updates existing services and their associations given valid inputs" do
+    populate_db
 
-  #   populate_db
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> update_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
+      qk_service_id = "317877"
+      qk_room_id = "318858"
+      services = KindynowQkNew.UpdateServices.update_services
+      service = Repo.one(from s in Service, where: s.qk_service_id == ^qk_service_id)
+      room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
 
-  #   with_mock HTTPoison, [get!: fn(_url, _headers) -> update_response end] do
-  #     HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-  #     qk_service_id = "317877"
-  #     qk_room_id = "318858"
-  #     services = KindynowQkNew.UpdateServices.update_services
-  #     service = Repo.one(from s in Service, where: s.qk_service_id == ^qk_service_id)
-  #     room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
+      assert service.licensed_capacity == "100"
+      assert service.state == "VIC"
+      assert room.qk_room_id == "318858"
+      assert room.name == "LITTLE PONY- NURSERY"
+    end
 
-  #     assert service[:liscenced_places] == 100
-  #     assert service[:state] == "VIC"
-  #     assert room[:id] == 318858
-  #     assert room[:name] == "LITTLE PONY- NURSERY"
-  #   end
+  end
 
-  # end
+  test "marks rooms that are no longer present in api response as inactive" do
+    populate_db
 
-  # test "marks rooms that are no longer present in api response as inactive" do
-
-  #   populate_db
-
-  #   with_mock HTTPoison, [get!: fn(_url, _headers) -> less_rooms_response end] do
-  #     HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-  #     qk_room_id = "318858"
-  #     services = KindynowQkNew.UpdateServices.update_services
-  #     room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
-  #     assert room[:active] == false
-  #   end
-  # end
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> less_rooms_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
+      qk_room_id = "318858"
+      qk_room_id_2 = "319166"
+      services = KindynowQkNew.UpdateServices.update_services
+      room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
+      room_2 = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id_2)
+      assert room.active == false
+      assert room_2.active == true
+    end
+  end
 end
