@@ -31,6 +31,7 @@ defmodule KindynowQkNew.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [{:phoenix, "~> 1.1.4"},
+     {:timex, "~> 2.1.6"},
      {:parallel_stream, "~> 1.0.3"},
      {:postgrex, ">= 0.0.0"},
      {:httpoison, "~> 0.8.0"},
