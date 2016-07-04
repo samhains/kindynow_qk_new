@@ -1,12 +1,12 @@
 defmodule KindynowQkNew.QkApi do
   alias KindynowQkNew.Config
 
-  def get_all_bookings service, start_date, end_date do
+  def get_bookings service, start_date, end_date do
     url = "https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds="<> service.qk_service_id<>"&databaseId=5012&startDate="<>start_date<>"&endDate="<>end_date
     make_request url
   end
 
-  def get_all_families page do
+  def get_families page do
     skip =
       page*100
       |> to_string
@@ -16,7 +16,7 @@ defmodule KindynowQkNew.QkApi do
     make_request url
   end
 
-  def get_all_services do
+  def get_services do
     url = "https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls"
 
     make_request url
