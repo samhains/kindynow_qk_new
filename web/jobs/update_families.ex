@@ -4,6 +4,7 @@ defmodule KindynowQkNew.UpdateFamilies do
   alias KindynowQkNew.Child
   alias KindynowQkNew.Contact
   alias KindynowQkNew.Repo
+  alias KindynowQkNew.QkApi
   alias Ecto.Date
 
   import KindynowQkNew.JobsHelper
@@ -34,18 +35,8 @@ defmodule KindynowQkNew.UpdateFamilies do
   end
 
   def update_families page do
-    headers = %{ "Authorization"=> "SharedSecretAuthorizationAttribute 9837363hejf84743875khbefkjhbf98f8gfkjnbfkjg545kjn598098fd8"}
-    skip =
-      page*100
-      |> to_string
 
-    url ="https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Families?$expand=Contacts,Children&$skip="<>skip
-
-    data =
-      url
-      |> HTTPoison.get!(headers)
-      |> Map.fetch!(:body)
-      |> Poison.decode!
+    data = QkApi.get_all_families page
 
     family_data =
       data

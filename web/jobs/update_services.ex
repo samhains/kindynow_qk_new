@@ -3,6 +3,7 @@ defmodule KindynowQkNew.UpdateServices do
   alias KindynowQkNew.Service
   alias KindynowQkNew.Room
   alias KindynowQkNew.Repo
+  alias KindynowQkNew.QkApi
 
   import KindynowQkNew.JobsHelper
   import Ecto.Query
@@ -18,15 +19,7 @@ defmodule KindynowQkNew.UpdateServices do
 
   def update_services do
 
-    headers = %{ "Authorization"=> "SharedSecretAuthorizationAttribute 9837363hejf84743875khbefkjhbf98f8gfkjnbfkjg545kjn598098fd8"}
-
-    url = "https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls"
-
-    data =
-      url
-      |> HTTPoison.get!(headers)
-      |> Map.fetch!(:body)
-      |> Poison.decode!
+    data = QkApi.get_all_services
 
     case Map.fetch(data, "value") do
       {:ok, response_value} ->
