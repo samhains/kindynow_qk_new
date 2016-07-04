@@ -26,6 +26,6 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
       |> Timex.shift(days: 14)
       |> Timex.format("%F", :strftime)
 
-    QkApi.get_all_bookings service, start_date, end_date
+    QkApi.get_bookings service, start_date, end_date
   end
 end

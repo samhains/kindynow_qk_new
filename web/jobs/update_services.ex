@@ -19,7 +19,7 @@ defmodule KindynowQkNew.UpdateServices do
 
   def run do
 
-    data = QkApi.get_all_services
+    data = QkApi.get_services
 
     case Map.fetch(data, "value") do
       {:ok, response_value} ->

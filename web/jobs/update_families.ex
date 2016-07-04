@@ -36,7 +36,7 @@ defmodule KindynowQkNew.UpdateFamilies do
 
   def update_families page do
 
-    data = QkApi.get_all_families page
+    data = QkApi.get_families page
 
     family_data =
       data
