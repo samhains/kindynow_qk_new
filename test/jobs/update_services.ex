@@ -10,7 +10,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   defp populate_db do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
     end
   end
 
@@ -314,7 +314,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   test "saves services and rooms to database given valid api response" do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
       assert Repo.one(from s in Service, select: count("*")) == 2
       assert Repo.one(from s in Room, select: count("*")) == 12
     end
@@ -323,7 +323,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   test "returns error for invalid api response" do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> invalid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
       {error, reason} = services
       assert error == :error
     end
@@ -332,7 +332,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   test "returns ok for valid api response" do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
       {ok, data} = services
       assert ok == :ok
     end
@@ -345,7 +345,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
       qk_service_id = "317877"
       qk_room_id = "318858"
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
       service = Repo.one(from s in Service, where: s.qk_service_id == ^qk_service_id)
       room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
 
@@ -364,7 +364,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
       qk_room_id = "318858"
       qk_room_id_2 = "319166"
-      services = KindynowQkNew.UpdateServices.update_services
+      services = KindynowQkNew.UpdateServices.run
       room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
       room_2 = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id_2)
       assert room.active == false

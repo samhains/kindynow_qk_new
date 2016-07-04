@@ -17,7 +17,7 @@ defmodule KindynowQkNew.UpdateServices do
     qk_room_id service_id active name min_age max_age capacity casual_booking_type
   )a
 
-  def update_services do
+  def run do
 
     data = QkApi.get_all_services
 
