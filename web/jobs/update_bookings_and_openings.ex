@@ -10,7 +10,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
   import Ecto.Query
   import Logger
 
-  def update_bookings_and_openings do
+  def run do
     Repo.all(Service)
     |> Stream.map(&update_bookings_and_openings_for_service/1)
     |> Stream.run

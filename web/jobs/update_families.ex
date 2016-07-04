@@ -19,7 +19,7 @@ defmodule KindynowQkNew.UpdateFamilies do
     first_name last_name phone account_relationship family_id qk_contact_id
   )a
 
-  def parallel_update_families batch do
+  def run batch do
     page_min = (20 * batch) - 19
     page_max = 20 * batch
     data =
@@ -28,7 +28,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       |> Enum.into([])
     case Enum.find data, fn(x) -> x==-1 end do
         index when is_nil index ->
-          parallel_update_families(batch+1)
+          run(batch+1)
         index ->
           Logger.info "Finished Updating Families"
     end
