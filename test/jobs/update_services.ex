@@ -8,7 +8,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   import Ecto.Query
   import IEx
 
-  defp populate_db do
+  defp mock_api_and_run_job do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
       services = KindynowQkNew.UpdateServices.run
@@ -21,13 +21,14 @@ defmodule KindynowQkNew.UpdateServicesTest do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
       services = KindynowQkNew.UpdateServices.run
       assert Repo.one(from s in Service, select: count("*")) == 2
-      assert Repo.one(from s in Room, select: count("*")) == 12
+      assert Repo.one(from r in Room, select: count("*")) == 12
     end
   end
 
   test "returns error for invalid api response" do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.invalid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
+
       services = KindynowQkNew.UpdateServices.run
       {error, reason} = services
       assert error == :error
@@ -43,8 +44,17 @@ defmodule KindynowQkNew.UpdateServicesTest do
     end
   end
 
+  test "associates rooms with the relevant service" do
+    mock_api_and_run_job
+
+    qk_service_id = "317877"
+    service = Repo.one(from s in Service, where: s.qk_service_id == ^qk_service_id, preload: [:rooms])
+
+    assert length(service.rooms) == 5
+  end
+
   test "updates existing services and their associations given valid inputs" do
-    populate_db
+    mock_api_and_run_job
 
     with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.update_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
@@ -64,7 +74,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
 
 
   test "updates existing services and their associations given valid inputs" do
-    populate_db
+    mock_api_and_run_job
 
     with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.empty_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
@@ -83,8 +93,7 @@ defmodule KindynowQkNew.UpdateServicesTest do
   end
 
   test "marks rooms that are no longer present in api response as inactive" do
-    populate_db
-
+    mock_api_and_run_job
     with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.less_rooms_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
       qk_room_id = "318858"

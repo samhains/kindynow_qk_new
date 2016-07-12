@@ -98,14 +98,24 @@ defmodule KindynowQkNew.UpdateServices do
   end
 
   defp create_or_update_rooms service, rooms do
-    rooms
-    |> add_service_id_to_enum_of_map(service)
-    |> Enum.map(&save_room/1)
+    Enum.map(rooms, fn (room) ->
+      room_map =
+        room
+        |> Enum.map(&fix_room_keys/1)
+        |> Enum.filter(&filter_room_keys/1)
+        |> Enum.into(%{})
+        |> Map.put(:service_id, service.id)
+
+      room_id = room_map[:qk_room_id]
+      query = from r in Room, where: r.qk_room_id == ^room_id
+
+      insert_record_and_print_errors room_map, Room, %Room{}, query
+    end)
   end
 
-  defp add_service_id_to_enum_of_map enum, service do
-    enum
-    |> Enum.map(fn map -> Map.put(map, :service_id, service.id) end)
+  defp add_room_to_service room, service do
+    room
+      |> Map.put(:service_id, service.id)
   end
 
   defp filter_room_keys {k, v} do
@@ -119,15 +129,6 @@ defmodule KindynowQkNew.UpdateServices do
   end
 
   defp save_room room do
-    room_map =
-      room
-      |> Enum.map(&fix_room_keys/1)
-      |> Enum.filter(&filter_room_keys/1)
-
-    room_id = room_map[:qk_room_id]
-    query = from r in Room, where: r.qk_room_id == ^room_id
-
-    insert_record_and_print_errors room_map, Room, %Room{}, query
   end
 
   defp calculate_time_zone state do

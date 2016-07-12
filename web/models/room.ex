@@ -9,7 +9,6 @@ defmodule KindynowQkNew.Room do
     field :active, :boolean
     field :qk_room_id, :string
     field :casual_booking_type, :string
-
     belongs_to :service, KindynowQkNew.Service
 
     timestamps

@@ -33,7 +33,6 @@ defmodule KindynowQkNew.JobsHelper do
     end
   end
 
-
   def response_handler response do
     case response do
       {:ok, record} ->
