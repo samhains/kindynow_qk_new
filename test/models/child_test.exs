@@ -3,7 +3,7 @@ defmodule KindynowQkNew.ChildTest do
 
   alias KindynowQkNew.Child
 
-  @valid_attrs %{dob: "2010-04-17", first_name: "some content", last_name: "some content", sync_id: "some content"}
+  @valid_attrs %{qk_child_id: "2342", dob: "2010-04-17", first_name: "some content", last_name: "some content", sync_id: "some content"}
   @invalid_attrs %{}
 
   test "changeset with valid attributes" do

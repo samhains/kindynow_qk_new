@@ -3,7 +3,7 @@ defmodule KindynowQkNew.ServiceTest do
 
   alias KindynowQkNew.Service
 
-  @valid_attrs %{address_post_code: "some content", address_state: "some content", address_street: "some content", address_suburb: "some content", email: "some content", licensed_capacity: "some content", name: "some content", phone_number: "some content", time_zone: "some content"}
+  @valid_attrs %{qk_service_id: "2342342", address_post_code: "some content", address_state: "some content", address_street: "some content", address_suburb: "some content", email: "some content", licensed_capacity: "some content", name: "some content", phone_number: "some content", time_zone: "some content"}
   @invalid_attrs %{}
 
   test "changeset with valid attributes" do
