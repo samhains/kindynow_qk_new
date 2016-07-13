@@ -1,5 +1,7 @@
 defmodule KindynowQkNew.Room do
+  require IEx
   use KindynowQkNew.Web, :model
+  alias KindynowQkNew.Mapper
 
   schema "rooms" do
     field :name, :string
@@ -8,13 +10,14 @@ defmodule KindynowQkNew.Room do
     field :capacity, :integer
     field :active, :boolean
     field :qk_room_id, :string
+    field :sync_id, :string
     field :casual_booking_type, :string
     belongs_to :service, KindynowQkNew.Service
 
     timestamps
   end
 
-  @required_fields ~w(qk_room_id service_id active name)
+  @required_fields ~w(qk_room_id service_id active name sync_id)
   @optional_fields ~w(capacity casual_booking_type min_age max_age)
 
   @doc """
@@ -24,6 +27,11 @@ defmodule KindynowQkNew.Room do
   with no validation performed.
   """
   def changeset(model, params \\ :empty) do
+    map = Mapper.roll_id_to_roll_sync_id
+    qk_room_id = params[:qk_room_id]
+    sync_id = map[qk_room_id]
+    params = Map.put(params, :sync_id, sync_id)
+
     model
     |> cast(params, @required_fields, @optional_fields)
   end

@@ -1,4 +1,5 @@
 defmodule KindynowQkNew.JobsHelper do
+  require IEx
   alias KindynowQkNew.Repo
   import Logger
 
@@ -10,6 +11,7 @@ defmodule KindynowQkNew.JobsHelper do
     case Repo.one(query) do
       record when is_nil record ->
         record_struct
+        |> model.changeset(record_map)
         |> Repo.insert
         |> response_handler
 

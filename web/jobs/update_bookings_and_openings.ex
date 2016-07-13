@@ -17,6 +17,10 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
   end
 
   def update_bookings_and_openings_for_service service do
+
+    rooms = Repo.all Ecto.assoc(service, :rooms)
+    service_id = service.qk_service_id
+
     {:ok, start_date} =
       Date.today
       |> Timex.format("%F", :strftime)
@@ -26,6 +30,12 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
       |> Timex.shift(days: 14)
       |> Timex.format("%F", :strftime)
 
-    data = QkApi.get_bookings_for_service service, start_date, end_date
+    # get the bookings for the date range for the service
+    bookings_data = QkApi.get_bookings_for_service service, start_date, end_date
+
+    bookings_map =
+      rooms
+      |> Enum.reduce(%{}, fn(room, total) -> Map.put(total, room.id, bookings_data[room.sync_id]) end)
+
   end
 end
