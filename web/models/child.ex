@@ -1,5 +1,4 @@
 defmodule KindynowQkNew.Child do
-  require IEx
   use KindynowQkNew.Web, :model
 
   schema "children" do
