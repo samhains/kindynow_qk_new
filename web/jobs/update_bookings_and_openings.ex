@@ -15,6 +15,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
   import Logger
 
   def run do
+
     Repo.all(Service)
     |> Stream.map(&update_bookings_and_openings_for_service/1)
     |> Stream.run
@@ -60,24 +61,31 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
             Enum.each(room_hash["ChildSyncIdChildDateValueMap"], fn({child_sync_id, booking_hash}) ->
               if child_sync_id != "$id" do
 
-                sync_id = child_sync_id
 
+                child = Repo.one(from s in Child, where: s.sync_id == ^child_sync_id)
                 status = booking_hash["DayStatus"];
                 # need to check if booking is already an opening
 
-                IEx.pry
-                child = Repo.one(from c in Child, where: c.sync_id == ^sync_id)
-                # qk_booking_id = Timex.format!(date, "%FT%T", :strftime) <> ":" <> room_id <> ":" <> child.id
+                date_string = Timex.format!(date, "%FT%T", :strftime)
+                qk_booking_id =  date_string <> ":" <> to_string(room_id) <> ":" <> to_string(child.id)
+                start_time = Timex.shift(date, hours: 12, minutes: 0)
+                expiry_time = Timex.shift(date, hours: 12, minutes: 0)
+                reminder_time = Timex.shift(date, hours: 8, minutes: 0)
+                end_time = Timex.shift(date, hours: 13, minutes: 0)
                 # find booking first
                 booking  = %Booking{
                   date: date,
-                  # qk_booking_id: qk_booking_id,
+                  qk_booking_id: qk_booking_id,
                   room_id: room_id,
-                  # child_id: child.id,
+                  child_id: child.id,
                   utilisation: booking_hash["Utilisation"],
                   permanent_booking: booking_hash["PermanentBooking"],
                   absent: status == 2,
+                  start_time: start_time,
+                  end_time: end_time,
                   day_status: status,
+                  expiry_time: expiry_time,
+                  reminder_time: reminder_time,
                   service_id: service_id
                 }
               end
