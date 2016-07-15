@@ -152,6 +152,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       contact
       |> Enum.map(&fix_contact_keys/1)
       |> Enum.filter(&filter_contact_keys/1)
+      |> Enum.into(%{})
 
     contact_id = contact_map[:qk_contact_id]
     query = from c in Contact, where: c.qk_contact_id == ^contact_id
@@ -164,6 +165,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       child
       |> Enum.map(&fix_child_keys/1)
       |> Enum.filter(&filter_child_keys/1)
+      |> Enum.into(%{})
 
     child_id = child_map[:qk_child_id]
     query = from c in Child, where: c.qk_child_id == ^child_id
