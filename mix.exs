@@ -35,7 +35,7 @@ defmodule KindynowQkNew.Mixfile do
      {:parallel_stream, "~> 1.0.3"},
      {:postgrex, ">= 0.0.0"},
      {:httpoison, "~> 0.8.0"},
-     {:phoenix_ecto, "~> 2.0"},
+     {:phoenix_ecto, "~> 3.0"},
      {:phoenix_html, "~> 2.4"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:gettext, "~> 0.9"},
