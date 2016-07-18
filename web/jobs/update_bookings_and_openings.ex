@@ -65,6 +65,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                 child = Repo.one(from s in Child, where: s.sync_id == ^child_sync_id)
                 status = booking_hash["DayStatus"];
                 # need to check if booking is already an opening
+                # if an opening already booked set the rebooked flag
 
                 date_string = Timex.format!(date, "%FT%T", :strftime)
                 qk_booking_id =  date_string <> ":" <> to_string(room_id) <> ":" <> to_string(child.id)
@@ -88,6 +89,8 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                   reminder_time: reminder_time,
                   service_id: service_id
                 }
+
+                #save booking
               end
 
             end)
