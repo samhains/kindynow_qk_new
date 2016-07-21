@@ -89,9 +89,13 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                   reminder_time: reminder_time,
                   service_id: service_id
                 }
+
+                bookings = [booking | child.bookings]
+                  |> Enum.map(&Ecto.Changeset.change/1)
+
                 changeset = Ecto.Changeset.change(child)
                 |> Ecto.Changeset.put_assoc(:services, [Ecto.Changeset.change(service)])
-                |> Ecto.Changeset.put_assoc(:bookings, [Ecto.Changeset.change(booking)])
+                |> Ecto.Changeset.put_assoc(:bookings, bookings)
                 childz = Repo.update!(changeset)
 
                 #save booking
