@@ -67,6 +67,37 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
             "CasualFeeVariant": 1
           }
         }
+      },
+      "2016-07-05T00:00:00": {
+        "$id": "27",
+        "RollSyncId": "c5265ed4-1471-e211-a3ad-5ef3fc0d484b",
+        "RollOpenStatus": 0,
+        "PlaceLimit": 15,
+        "ChildrenPlaced": 7,
+        "UtilisedPlaces": 7,
+        "ChildSyncIdChildDateValueMap": {
+          "$id": "28",
+          "f62d8195-32cd-e411-8c68-5ef3fc0d484b": {
+            "$id": "29",
+            "DayStatus": 1,
+            "Utilisation": 1,
+            "PermanentBooking": true,
+            "FeeTypeId": 11152504,
+            "FeeVariant": 1,
+            "CasualFeeTypeId": 11152504,
+            "CasualFeeVariant": 1
+          },
+          "0f94ff68-ea49-e411-a741-5ef3fc0d484b": {
+            "$id": "30",
+            "DayStatus": 2,
+            "Utilisation": 0,
+            "PermanentBooking": true,
+            "FeeTypeId": 11152504,
+            "FeeVariant": 2,
+            "CasualFeeTypeId": 11152504,
+            "CasualFeeVariant": 1
+          }
+        }
       }
     }
   }
