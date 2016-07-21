@@ -4,7 +4,7 @@ defmodule KindynowQkNew.Mixfile do
   def project do
     [app: :kindynow_qk_new,
      version: "0.0.1",
-     elixir: "~> 1.0",
+     elixir: "~> 1.3.2",
      elixirc_paths: elixirc_paths(Mix.env),
      compilers: [:phoenix, :gettext] ++ Mix.compilers,
      build_embedded: Mix.env == :prod,
@@ -18,8 +18,8 @@ defmodule KindynowQkNew.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {KindynowQkNew, []},
-     applications: [:phoenix, :phoenix_html, :cowboy, :logger, :httpoison, :gettext,
-                    :phoenix_ecto, :postgrex, :quantum, :parallel_stream]]
+     applications: [:phoenix, :phoenix_html,  :cowboy, :logger, :httpoison, :gettext, :timex_ecto,
+                    :phoenix_ecto, :postgrex, :parallel_stream]]
   end
 
   # Specifies which paths to compile per environment.
@@ -31,15 +31,15 @@ defmodule KindynowQkNew.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [{:phoenix, "~> 1.1.4"},
-     {:timex, "~> 2.1.6"},
+     {:timex, "~> 3.0"},
+     {:timex_ecto, "~> 3.0"},
      {:parallel_stream, "~> 1.0.3"},
      {:postgrex, ">= 0.0.0"},
-     {:httpoison, "~> 0.8.0"},
+     {:httpoison, "~> 0.9.0"},
      {:phoenix_ecto, "~> 3.0"},
      {:phoenix_html, "~> 2.4"},
      {:phoenix_live_reload, "~> 1.0", only: :dev},
      {:gettext, "~> 0.9"},
-     {:quantum, "~> 1.7.1"},
      {:mock, "~> 0.1.1", only: :test},
      {:cowboy, "~> 1.0"}]
   end
@@ -52,6 +52,7 @@ defmodule KindynowQkNew.Mixfile do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     ["ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-     "ecto.reset": ["ecto.drop", "ecto.setup"]]
+     "ecto.reset": ["ecto.drop", "ecto.setup"],
+     "test": ["ecto.drop", "ecto.create --quiet", "ecto.migrate", "test"]]
   end
 end
