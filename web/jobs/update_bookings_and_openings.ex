@@ -15,7 +15,6 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
   import Logger
 
   def run do
-
     Repo.all(Service)
     |> Stream.map(&update_bookings_and_openings_for_service/1)
     |> Stream.run
@@ -24,14 +23,14 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
   def update_bookings_and_openings_for_service service do
 
     rooms = Repo.all Ecto.assoc(service, :rooms)
-    service_id = service.qk_service_id
+    service_id = service.id
 
     {:ok, start_date} =
-      Date.today
+      Timex.now
       |> Timex.format("%F", :strftime)
 
     {:ok, end_date} =
-      Date.today
+      Timex.now
       |> Timex.shift(days: 14)
       |> Timex.format("%F", :strftime)
 
@@ -61,8 +60,9 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
             Enum.each(room_hash["ChildSyncIdChildDateValueMap"], fn({child_sync_id, booking_hash}) ->
               if child_sync_id != "$id" do
 
+                child = Repo.one(from c in Child, where: c.sync_id == ^child_sync_id, preload: [:services, :bookings])
 
-                child = Repo.one(from s in Child, where: s.sync_id == ^child_sync_id)
+                # child.services << service
                 status = booking_hash["DayStatus"];
                 # need to check if booking is already an opening
                 # if an opening already booked set the rebooked flag
@@ -79,16 +79,20 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                   qk_booking_id: qk_booking_id,
                   room_id: room_id,
                   child_id: child.id,
-                  utilisation: booking_hash["Utilisation"],
-                  permanent_booking: booking_hash["PermanentBooking"],
+                  utilisation: to_string(booking_hash["Utilisation"]),
+                  permanent_booking: to_string(booking_hash["PermanentBooking"]),
                   absent: status == 2,
                   start_time: start_time,
                   end_time: end_time,
-                  day_status: status,
+                  day_status: to_string(status),
                   expiry_time: expiry_time,
                   reminder_time: reminder_time,
                   service_id: service_id
                 }
+                changeset = Ecto.Changeset.change(child)
+                |> Ecto.Changeset.put_assoc(:services, [Ecto.Changeset.change(service)])
+                |> Ecto.Changeset.put_assoc(:bookings, [Ecto.Changeset.change(booking)])
+                childz = Repo.update!(changeset)
 
                 #save booking
               end
