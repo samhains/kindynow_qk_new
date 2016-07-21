@@ -14,6 +14,7 @@ defmodule KindynowQkNew.Room do
     field :casual_booking_type, :string
     belongs_to :service, KindynowQkNew.Service
 
+    many_to_many :children, KindynowQkNew.Child, join_through: :child_rooms
     timestamps
   end
 

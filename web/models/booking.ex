@@ -2,12 +2,12 @@ defmodule KindynowQkNew.Booking do
   use KindynowQkNew.Web, :model
 
   schema "bookings" do
-    field :date, Ecto.DateTime
+    field :date, Timex.Ecto.DateTime
     field :fee, :integer
-    field :start_time, Ecto.DateTime
-    field :end_time, Ecto.DateTime
-    field :reminder_time, Ecto.DateTime
-    field :expiry_time, Ecto.DateTime
+    field :start_time, Timex.Ecto.DateTime
+    field :end_time, Timex.Ecto.DateTime
+    field :reminder_time, Timex.Ecto.DateTime
+    field :expiry_time, Timex.Ecto.DateTime
     field :reminder_send, :boolean
     field :absent, :boolean
     field :rebooked, :boolean
@@ -24,7 +24,7 @@ defmodule KindynowQkNew.Booking do
     timestamps
   end
 
-  @required_fields ~w(date qk_booking_id fee start_time end_time)
+  @required_fields ~w(qk_booking_id)
   @optional_fields ~w()
 
   @doc """

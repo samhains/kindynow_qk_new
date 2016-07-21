@@ -4,10 +4,9 @@ defmodule KindynowQkNew.Repo.Migrations.CreateChildService do
   def change do
     create table(:child_services) do
       add :service_id, references(:services, on_delete: :nothing)
-
       timestamps
     end
-    create index(:child_services, [:service_id])
 
+    create index(:child_services, [:service_id])
   end
 end

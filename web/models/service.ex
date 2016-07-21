@@ -13,9 +13,8 @@ defmodule KindynowQkNew.Service do
     field :state, :string
     field :post_code, :string
 
+    many_to_many :children, KindynowQkNew.Child, join_through: :child_services
     has_many :rooms, KindynowQkNew.Room
-    # has_many :service_addresses, KindynowQkNew.ServiceAddress
-    # has_many :addresses, through: [:address_services, :address]
 
     timestamps
   end
