@@ -11,8 +11,6 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
   import IEx
 
   test "saves services and rooms to database given valid api response" do
-    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
-      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
       service = Repo.insert!(%Service{
             qk_service_id: "317913",
             name: "Piper Central World of Learning",
@@ -70,6 +68,14 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
           sync_id: "0f94ff68-ea49-e411-a741-5ef3fc0d484b",
         }
       )
+
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
+      bookings = KindynowQkNew.UpdateBookingsAndOpenings.run
+    end
+
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.booking_change_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
       bookings = KindynowQkNew.UpdateBookingsAndOpenings.run
     end
   end

@@ -74,6 +74,8 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                 reminder_time = Timex.shift(date, hours: 8, minutes: 0)
                 end_time = Timex.shift(date, hours: 13, minutes: 0)
                 # find booking first
+                existing_booking = Repo.one(from b in Booking, where: b.qk_booking_id == ^qk_booking_id)
+
                 booking  = %Booking{
                   date: date,
                   qk_booking_id: qk_booking_id,
@@ -90,12 +92,17 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                   service_id: service_id
                 }
 
-                bookings = [booking | child.bookings]
+                # create or update list of structs
+
+                bookings_changeset =
+                  child.bookings
+                  |> update_or_prepend_to_list(booking, :qk_booking_id)
                   |> Enum.map(&Ecto.Changeset.change/1)
 
-                changeset = Ecto.Changeset.change(child)
-                |> Ecto.Changeset.put_assoc(:services, [Ecto.Changeset.change(service)])
-                |> Ecto.Changeset.put_assoc(:bookings, bookings)
+                changeset =
+                  Ecto.Changeset.change(child)
+                  |> Ecto.Changeset.put_assoc(:services, [Ecto.Changeset.change(service)])
+                  |> Ecto.Changeset.put_assoc(:bookings, bookings_changeset)
                 childz = Repo.update!(changeset)
 
                 #save booking

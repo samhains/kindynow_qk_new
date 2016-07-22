@@ -43,4 +43,21 @@ defmodule KindynowQkNew.JobsHelper do
         {:error, record_changeset.errors}
     end
   end
+
+  def update_or_prepend_to_list list, struct, unique_key do
+    case Enum.find(list, fn(s) -> Map.get(struct, unique_key) == Map.get(s, unique_key)  end) do
+      update_struct when is_nil(update_struct) ->
+        [struct | list]
+
+      update_struct ->
+        updated_struct =
+          update_struct
+          |> Map.merge(struct)
+          |> Map.put(:id, update_struct.id)
+
+        list
+        |> List.delete(update_struct)
+        |> List.insert_at(0, updated_struct)
+    end
+  end
 end
