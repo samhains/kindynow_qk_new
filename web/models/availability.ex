@@ -2,7 +2,7 @@ defmodule KindynowQkNew.Availability do
   use KindynowQkNew.Web, :model
 
   schema "availabilities" do
-    field :date, Ecto.Date
+    field :date, Timex.Ecto.DateTime
     field :open, :boolean
     field :used, :integer
     field :capacity, :integer

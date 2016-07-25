@@ -1,6 +1,9 @@
 defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
   use ExUnit.Case, async: false
-  alias KindynowQkNew.Bookings
+  use KindynowQkNew.ConnCase
+
+  alias KindynowQkNew.Booking
+  alias KindynowQkNew.Availability
   alias KindynowQkNew.Fixtures.BookingsAndOpenings
   import Mock
   alias KindynowQkNew.Repo
@@ -10,7 +13,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
   import Ecto.Query
   import IEx
 
-  test "saves services and rooms to database given valid api response" do
+  defp prepare_db do
       service = Repo.insert!(%Service{
             qk_service_id: "317913",
             name: "Piper Central World of Learning",
@@ -69,14 +72,54 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
         }
       )
 
+  end
+
+  test "saves bookings to database" do
+    prepare_db
     with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
-      bookings = KindynowQkNew.UpdateBookingsAndOpenings.run
-    end
-
-    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.booking_change_response end] do
-      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
-      bookings = KindynowQkNew.UpdateBookingsAndOpenings.run
+      KindynowQkNew.UpdateBookingsAndOpenings.run
+      assert Repo.one(from b in Booking, select: count("*")) == 7
     end
   end
+
+  test "updates the services and bookings associations for the child in question" do
+    prepare_db
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
+      KindynowQkNew.UpdateBookingsAndOpenings.run
+      qk_child_id = "1"
+      child =  Repo.one(from c in Child, where: c.qk_child_id == ^qk_child_id, preload: [:bookings, :services])
+      assert length(child.services) == 1
+      assert length(child.bookings) == 2
+    end
+  end
+
+  test "creates availabily for each date for each room" do
+    prepare_db
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
+      KindynowQkNew.UpdateBookingsAndOpenings.run
+      assert Repo.one(from a in Availability, select: count("*")) == 2
+    end
+  end
+
+  test "will update booking information if it changes" do
+    prepare_db
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
+      KindynowQkNew.UpdateBookingsAndOpenings.run
+    end
+    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.booking_change_response end] do
+      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
+      KindynowQkNew.UpdateBookingsAndOpenings.run
+      qk_child_id = "1"
+      child =  Repo.one(from c in Child, where: c.qk_child_id == ^qk_child_id, preload: [:bookings])
+      booking_1 = List.first child.bookings
+      booking_2 = List.last child.bookings
+      assert booking_1.day_status == "2"
+      assert booking_2.day_status == "2"
+    end
+  end
+
 end

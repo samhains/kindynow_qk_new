@@ -20,6 +20,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
     |> Stream.run
   end
 
+
   def update_bookings_and_openings_for_service service do
 
     rooms = Repo.all Ecto.assoc(service, :rooms)
@@ -47,7 +48,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
           if date_string != "$id" do
             date = Timex.parse!(date_string, "%FT%T", :strftime)
 
-            attendance = %Availability{
+            availability = %Availability{
               date: date,
               room_id: room_id,
               service_id: service_id,
@@ -55,6 +56,8 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
               capacity: room_hash["PlaceLimit"],
               open: room_hash["RollOpenStatus"] == 0,
             }
+            |> Repo.insert
+            |> response_handler
 
             # date = Ecto.DateTime.now
             Enum.each(room_hash["ChildSyncIdChildDateValueMap"], fn({child_sync_id, booking_hash}) ->
@@ -94,18 +97,14 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
 
                 # create or update list of structs
 
-                bookings_changeset =
-                  child.bookings
-                  |> update_or_prepend_to_list(booking, :qk_booking_id)
-                  |> Enum.map(&Ecto.Changeset.change/1)
 
-                changeset =
-                  Ecto.Changeset.change(child)
-                  |> Ecto.Changeset.put_assoc(:services, [Ecto.Changeset.change(service)])
-                  |> Ecto.Changeset.put_assoc(:bookings, bookings_changeset)
-                childz = Repo.update!(changeset)
-
-                #save booking
+                bookings_changeset = create_changeset_from_list child.bookings, booking, :qk_booking_id
+                services_changeset = create_changeset_from_list child.services, service, :qk_booking_id
+                Ecto.Changeset.change(child)
+                |> Ecto.Changeset.put_assoc(:services, services_changeset)
+                |> Ecto.Changeset.put_assoc(:bookings, bookings_changeset)
+                |> Repo.update
+                |> response_handler
               end
 
             end)

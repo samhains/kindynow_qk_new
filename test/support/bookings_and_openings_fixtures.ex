@@ -183,7 +183,7 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
           "$id": "28",
           "f62d8195-32cd-e411-8c68-5ef3fc0d484b": {
             "$id": "29",
-            "DayStatus": 1,
+            "DayStatus": 2,
             "Utilisation": 1,
             "PermanentBooking": true,
             "FeeTypeId": 11152504,

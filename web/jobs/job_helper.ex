@@ -44,6 +44,12 @@ defmodule KindynowQkNew.JobsHelper do
     end
   end
 
+  def create_changeset_from_list list, struct, unique_key do
+      list
+      |> update_or_prepend_to_list(struct, unique_key)
+      |> Enum.map(&Ecto.Changeset.change/1)
+  end
+
   def update_or_prepend_to_list list, struct, unique_key do
     case Enum.find(list, fn(s) -> Map.get(struct, unique_key) == Map.get(s, unique_key)  end) do
       update_struct when is_nil(update_struct) ->
