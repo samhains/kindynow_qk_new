@@ -25,7 +25,7 @@ defmodule KindynowQkNew.Booking do
   end
 
   @required_fields ~w(qk_booking_id)
-  @optional_fields ~w()
+  @optional_fields ~w(day_status)
 
   @doc """
   Creates a changeset based on the `model` and `params`.
@@ -36,5 +36,15 @@ defmodule KindynowQkNew.Booking do
   def changeset(model, params \\ :empty) do
     model
     |> cast(params, @required_fields, @optional_fields)
+  end
+end
+
+defimpl Collectable, for: KindynowQkNew.Booking do
+  def into(original) do
+    {original, fn
+      map, {:cont, {k, v}} -> %{ map | k => v}
+      map, :done -> map
+      _, :halt -> :ok
+    end}
   end
 end

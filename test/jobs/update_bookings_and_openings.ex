@@ -113,13 +113,16 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.booking_change_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
       KindynowQkNew.UpdateBookingsAndOpenings.run
-      qk_child_id = "1"
-      child =  Repo.one(from c in Child, where: c.qk_child_id == ^qk_child_id, preload: [:bookings])
+      sync_id = "0f94ff68-ea49-e411-a741-5ef3fc0d484b"
+      child =  Repo.one(from c in Child, where: c.sync_id == ^sync_id, preload: [:bookings])
+
       booking_1 = List.first child.bookings
       booking_2 = List.last child.bookings
+
+      assert Repo.one(from c in Child, select: count("*")) == 5
+      assert Repo.one(from b in Booking, select: count("*")) == 7
       assert booking_1.day_status == "2"
       assert booking_2.day_status == "2"
     end
   end
-
 end

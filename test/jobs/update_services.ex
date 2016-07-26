@@ -1,5 +1,7 @@
 defmodule KindynowQkNew.UpdateServicesTest do
   use ExUnit.Case, async: false
+  use KindynowQkNew.ConnCase
+
   alias KindynowQkNew.Service
   alias KindynowQkNew.Room
   import Mock
@@ -72,25 +74,6 @@ defmodule KindynowQkNew.UpdateServicesTest do
 
   end
 
-
-  test "updates existing services and their associations given valid inputs" do
-    mock_api_and_run_job
-
-    with_mock HTTPoison, [get!: fn(_url, _headers) -> ServiceFixtures.empty_response end] do
-      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Services?$expand=Rolls", [foo: :bar])
-      qk_service_id = "317877"
-      qk_room_id = "318858"
-      services = KindynowQkNew.UpdateServices.run
-      service = Repo.one(from s in Service, where: s.qk_service_id == ^qk_service_id)
-      room = Repo.one(from r in Room, where: r.qk_room_id == ^qk_room_id)
-
-      assert service.licensed_capacity == "100"
-      assert service.state == "VIC"
-      assert room.qk_room_id == "318858"
-      assert room.name == "LITTLE PONY- NURSERY"
-    end
-
-  end
 
   test "marks rooms that are no longer present in api response as inactive" do
     mock_api_and_run_job

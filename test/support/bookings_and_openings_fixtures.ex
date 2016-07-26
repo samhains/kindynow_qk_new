@@ -89,7 +89,7 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
           },
           "0f94ff68-ea49-e411-a741-5ef3fc0d484b": {
             "$id": "30",
-            "DayStatus": 2,
+            "DayStatus": 1,
             "Utilisation": 0,
             "PermanentBooking": true,
             "FeeTypeId": 11152504,
@@ -122,7 +122,7 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
           "$id": "4",
           "f62d8195-32cd-e411-8c68-5ef3fc0d484b": {
             "$id": "5",
-            "DayStatus": 2,
+            "DayStatus": 1,
             "Utilisation": 1,
             "PermanentBooking": true,
             "FeeTypeId": 11152504,
@@ -162,7 +162,7 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
           },
           "0f94ff68-ea49-e411-a741-5ef3fc0d484b": {
             "$id": "9",
-            "DayStatus": 1,
+            "DayStatus": 2,
             "Utilisation": 1,
             "PermanentBooking": true,
             "FeeTypeId": 11152504,
@@ -183,7 +183,7 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
           "$id": "28",
           "f62d8195-32cd-e411-8c68-5ef3fc0d484b": {
             "$id": "29",
-            "DayStatus": 2,
+            "DayStatus": 1,
             "Utilisation": 1,
             "PermanentBooking": true,
             "FeeTypeId": 11152504,

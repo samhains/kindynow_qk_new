@@ -79,7 +79,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
                 # find booking first
                 existing_booking = Repo.one(from b in Booking, where: b.qk_booking_id == ^qk_booking_id)
 
-                booking  = %Booking{
+                booking  = %{
                   date: date,
                   qk_booking_id: qk_booking_id,
                   room_id: room_id,
@@ -97,12 +97,19 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
 
                 # create or update list of structs
 
+                query = from b in Booking, where: b.qk_booking_id == ^qk_booking_id
 
-                bookings_changeset = create_changeset_from_list child.bookings, booking, :qk_booking_id
-                services_changeset = create_changeset_from_list child.services, service, :qk_booking_id
+                bookings_changeset =
+                  booking
+                  |> insert_record_and_print_errors(Booking, %Booking{}, query)
+
+                services_changeset =
+                  child.services
+                  |> prepend_to_list_if_unique(service, :qk_booking_id)
+                  |> Enum.map(&Ecto.Changeset.change/1)
+
                 Ecto.Changeset.change(child)
                 |> Ecto.Changeset.put_assoc(:services, services_changeset)
-                |> Ecto.Changeset.put_assoc(:bookings, bookings_changeset)
                 |> Repo.update
                 |> response_handler
               end
