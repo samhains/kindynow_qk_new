@@ -1,8 +1,10 @@
 defmodule KindynowQkNew.QkApi do
+  require IEx
   alias KindynowQkNew.Config
 
   def get_bookings_for_service service, start_date, end_date do
     url = "https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds="<> service.qk_service_id<>"&databaseId=5012&startDate="<>start_date<>"&endDate="<>end_date
+
     make_request url
   end
 

@@ -29,14 +29,14 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
              name: "5. KINDERGARTEN",
              active: true}
         )
-      # Repo.insert!(
-      #     %Room{
-      #         qk_room_id: "318251",
-      #         service_id: service.id,
-      #         sync_id: "c8265ed4-1471-e211-a3ad-5ef3fc0d484b",
-      #         name: "3. SNR TODDLERS",
-      #         active: true}
-      # )
+      Repo.insert!(
+          %Room{
+              qk_room_id: "318251",
+              service_id: service.id,
+              sync_id: "c6265ed4-1471-e211-a3ad-5ef3fc0d484b",
+              name: "3. SNR TODDLERS",
+              active: true}
+      )
 
       Repo.insert!(
         %Child{
@@ -49,6 +49,12 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
         %Child{
           qk_child_id: "2",
           sync_id: "68b03383-5f94-e411-a2a8-5ef3fc0d484b",
+        }
+      )
+      Repo.insert!(
+        %Child{
+          qk_child_id: "3",
+          sync_id: "62b71ab7-d305-e611-80cb-00155d02dd3b",
         }
       )
 

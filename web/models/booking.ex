@@ -25,7 +25,7 @@ defmodule KindynowQkNew.Booking do
   end
 
   @required_fields ~w(qk_booking_id)
-  @optional_fields ~w(day_status)
+  @optional_fields ~w(day_status date start_time end_time reminder_time expiry_time reminder_time absent rebooked utilisation qk_booking_id day_status permanent_booking service_id contact_id child_id room_id booking_type_id)
 
   @doc """
   Creates a changeset based on the `model` and `params`.

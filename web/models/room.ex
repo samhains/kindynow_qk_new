@@ -29,7 +29,7 @@ defmodule KindynowQkNew.Room do
   """
   def changeset(model, params \\ :empty) do
     map = Mapper.roll_id_to_roll_sync_id
-    qk_room_id = params[:qk_room_id]
+    qk_room_id = Map.get(model, :qk_room_id)
     sync_id = map[qk_room_id]
     params = Map.put(params, :sync_id, sync_id)
 
