@@ -17,6 +17,8 @@ defmodule KindynowQkNew.Fixtures.BookingsAndOpenings do
         "ChildSyncIdChildDateValueMap": {
           "$id": "4",
           "f62d8195-32cd-e411-8c68-5ef3fc0d484b": {
+            "*date": "",
+            "*room_id": "",
             "$id": "5",
             "DayStatus": 1,
             "Utilisation": 1,
