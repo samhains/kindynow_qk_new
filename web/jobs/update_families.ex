@@ -4,6 +4,7 @@ defmodule KindynowQkNew.UpdateFamilies do
   alias KindynowQkNew.Child
   alias KindynowQkNew.Contact
   alias KindynowQkNew.Repo
+  alias KindynowQkNew.QkApi
   alias Ecto.Date
 
   import KindynowQkNew.JobsHelper
@@ -34,18 +35,8 @@ defmodule KindynowQkNew.UpdateFamilies do
   end
 
   def update_families page do
-    headers = %{ "Authorization"=> "SharedSecretAuthorizationAttribute 9837363hejf84743875khbefkjhbf98f8gfkjnbfkjg545kjn598098fd8"}
-    skip =
-      page*100
-      |> to_string
 
-    url ="https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/odata/Families?$expand=Contacts,Children&$skip="<>skip
-
-    data =
-      url
-      |> HTTPoison.get!(headers)
-      |> Map.fetch!(:body)
-      |> Poison.decode!
+    data = QkApi.get_families page
 
     family_data =
       data
@@ -161,6 +152,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       contact
       |> Enum.map(&fix_contact_keys/1)
       |> Enum.filter(&filter_contact_keys/1)
+      |> Enum.into(%{})
 
     contact_id = contact_map[:qk_contact_id]
     query = from c in Contact, where: c.qk_contact_id == ^contact_id
@@ -173,6 +165,7 @@ defmodule KindynowQkNew.UpdateFamilies do
       child
       |> Enum.map(&fix_child_keys/1)
       |> Enum.filter(&filter_child_keys/1)
+      |> Enum.into(%{})
 
     child_id = child_map[:qk_child_id]
     query = from c in Child, where: c.qk_child_id == ^child_id

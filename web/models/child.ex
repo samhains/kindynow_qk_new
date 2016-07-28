@@ -1,5 +1,4 @@
 defmodule KindynowQkNew.Child do
-  require IEx
   use KindynowQkNew.Web, :model
 
   schema "children" do
@@ -9,6 +8,10 @@ defmodule KindynowQkNew.Child do
     field :dob, Ecto.Date
     field :sync_id, :string
     belongs_to :family, KindynowQkNew.Family
+
+    has_many :bookings, KindynowQkNew.Booking
+    many_to_many :services, KindynowQkNew.Service, join_through: "child_services"
+    many_to_many :rooms, KindynowQkNew.Room, join_through: "child_rooms"
 
     timestamps
   end

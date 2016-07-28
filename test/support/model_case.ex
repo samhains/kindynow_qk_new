@@ -26,8 +26,10 @@ defmodule KindynowQkNew.ModelCase do
   end
 
   setup tags do
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(KindynowQkNew.Repo)
+
     unless tags[:async] do
-      Ecto.Adapters.SQL.restart_test_transaction(KindynowQkNew.Repo, [])
+      Ecto.Adapters.SQL.Sandbox.mode(KindynowQkNew.Repo, {:shared, self()})
     end
 
     :ok
