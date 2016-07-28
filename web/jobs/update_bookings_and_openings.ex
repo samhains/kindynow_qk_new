@@ -20,54 +20,32 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
     |> Stream.run
   end
 
-  def transform_api_to_bookings_maps bookings_api_map do
+  def transform_api_to_bookings_maps bookings_api_map, service do
     for {room_id, room_bookings} <- bookings_api_map,
-      {date_string, room_hash} <- room_bookings,
-      is_map(room_hash),
-    {child_sync_id, booking_hash} <- room_hash["ChildSyncIdChildDateValueMap"],
-      child_sync_id != "$id" do
-        date = Timex.parse!(date_string, "%FT%T", :strftime)
-        status = booking_hash["DayStatus"];
+        is_map(room_bookings),
+        {date_string, room_hash} <- room_bookings,
+        is_map(room_hash),
+        {child_sync_id, booking_hash} <- room_hash["ChildSyncIdChildDateValueMap"],
+        child_sync_id != "$id" do
+          date = Timex.parse!(date_string, "%FT%T", :strftime)
+          status = booking_hash["DayStatus"];
 
-        %{
-          date: date,
-          room_id: room_id,
-          utilisation: to_string(booking_hash["Utilisation"]),
-          permanent_booking: to_string(booking_hash["PermanentBooking"]),
-          absent: status == 2,
-          child_sync_id: child_sync_id,
-          start_time: Timex.shift(date, hours: 12, minutes: 0),
-          end_time: Timex.shift(date, hours: 13, minutes: 0),
-          day_status: to_string(status),
-          expiry_time: Timex.shift(date, hours: 13, minutes: 0),
-          reminder_time: Timex.shift(date, hours: 8, minutes: 0),
-        }
+          %{
+            date: date,
+            room_id: room_id,
+            utilisation: to_string(booking_hash["Utilisation"]),
+            permanent_booking: to_string(booking_hash["PermanentBooking"]),
+            absent: status == 2,
+            service_id: service.id,
+            child_sync_id: child_sync_id,
+            start_time: Timex.shift(date, hours: 12, minutes: 0),
+            end_time: Timex.shift(date, hours: 13, minutes: 0),
+            day_status: to_string(status),
+            expiry_time: Timex.shift(date, hours: 13, minutes: 0),
+            reminder_time: Timex.shift(date, hours: 8, minutes: 0),
+          }
+      end
     end
-  end
-
-  # def update_child_information service, booking do
-  #   date_string = Timex.format!(booking.date, "%FT%T", :strftime)
-  #   room_id = booking.room_id |> to_string
-  #   child_sync_id = booking.child_sync_id
-  #   child = Repo.one(from c in Child, where: c.sync_id == ^child_sync_id, preload: [:services])
-  #   qk_booking_id =  date_string <> ":" <> room_id <> ":" <> to_string(child.id)
-
-
-  #   services_changeset =
-  #     child.services
-  #     |> prepend_to_list_if_unique(service, :qk_booking_id)
-  #     |> Enum.map(&Ecto.Changeset.change/1)
-
-  #   Ecto.Changeset.change(child)
-  #   |> Ecto.Changeset.put_assoc(:services, services_changeset)
-  #   |> Repo.update
-  #   |> response_handler
-
-  #   booking
-  #   |> Map.put(:child_id, child.id)
-  #   |> Map.put(:qk_booking_id, qk_booking_id)
-  # end
-
 
   def save_booking booking do
     qk_booking_id = booking.qk_booking_id
@@ -97,8 +75,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
     bookings =
       rooms
       |> Enum.reduce(%{}, fn(room, total) -> Map.put(total, room.id, bookings_data[room.sync_id]) end)
-      |> transform_api_to_bookings_maps
-      |> Enum.map(fn(booking) -> Map.put(booking, :service_id, service.id) end)
+      |> transform_api_to_bookings_maps(service)
       |> Enum.map(fn(booking) ->
           date_string = Timex.format!(booking.date, "%FT%T", :strftime)
           room_id = booking.room_id |> to_string
@@ -121,8 +98,9 @@ defmodule KindynowQkNew.UpdateBookingsAndOpenings do
           |> Map.delete(:child_sync_id)
           |> Map.put(:child_id, child.id)
           |> Map.put(:qk_booking_id, qk_booking_id)
+          |> save_booking
+
         end)
-      |> Enum.map(&save_booking/1)
 
   end
 end

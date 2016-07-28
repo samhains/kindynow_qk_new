@@ -85,7 +85,7 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
     with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
       HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
       KindynowQkNew.UpdateBookingsAndOpenings.run
-      assert Repo.one(from b in Booking, select: count("*")) == 7
+      assert Repo.one(from b in Booking, select: count("*")) == 8
     end
   end
 
@@ -98,15 +98,6 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
       child =  Repo.one(from c in Child, where: c.qk_child_id == ^qk_child_id, preload: [:bookings, :services])
       assert length(child.services) == 1
       assert length(child.bookings) == 2
-    end
-  end
-
-  test "creates availabily for each date for each room" do
-    prepare_db
-    with_mock HTTPoison, [get!: fn(_url, _headers) -> BookingsAndOpenings.valid_response end] do
-      HTTPoison.get!("https://www.qkenhanced.com.au/Enhanced.KindyNow/v1/Bookings/GetAll?source=update&serviceIds=317913&databaseId=5012&startDate=2016-07-04&endDate=2016-07-18", [foo: :bar])
-      KindynowQkNew.UpdateBookingsAndOpenings.run
-      assert Repo.one(from a in Availability, select: count("*")) == 2
     end
   end
 
@@ -125,8 +116,8 @@ defmodule KindynowQkNew.UpdateBookingsAndOpeningsTest do
       booking_1 = List.first child.bookings
       booking_2 = List.last child.bookings
 
-      assert Repo.one(from c in Child, select: count("*")) == 5
-      assert Repo.one(from b in Booking, select: count("*")) == 7
+      assert Repo.one(from c in Child, select: count("*")) == 6
+      assert Repo.one(from b in Booking, select: count("*")) == 8
       assert booking_1.day_status == "2"
       assert booking_2.day_status == "2"
     end
